@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"sort"
+	"sort-go/internal/alphabet"
 	"strings"
 )
 
@@ -49,7 +50,7 @@ func printDefault(data string) {
 	// divido el archivo por cada linea
 	// organizo, e imprimo
 	arr := strings.Split(data, "\n")
-	sort.Strings(arr)
+	sort.Sort(alphabet.Alphabetic(arr))
 	fmt.Println(strings.Join(arr[:], "\n"))
 }
 
