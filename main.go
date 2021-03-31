@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"sort"
 	"sort-go/internal/alphabet"
+	"strconv"
 	"strings"
 )
 
@@ -13,9 +14,13 @@ var (
 	b bool // -b, --ignore-leading-blanks
 	d bool // -d, --dictionary-order
 	f bool // -f, --ignore-case
+	g bool // -g, --general-numeric-sort
 )
 
 func main() {
+	// -g, --general-numeric-sort
+	flag.BoolVar(&g, "g", false, "compare according to general numerical value")
+	flag.BoolVar(&g, "general-numeric-sort", false, "compare according to general numerical value")
 	// -f, --ignore-case
 	flag.BoolVar(&f, "f", false, "fold lower case to upper case characters")
 	flag.BoolVar(&f, "ignore-case", false, "fold lower case to upper case characters")
@@ -29,7 +34,7 @@ func main() {
 
 	// recibo todos los los parametros
 	for _, file := range flag.Args() {
-		sorting(file, b, d, f)
+		sorting(file, b, d, f, g)
 	}
 }
 
@@ -37,8 +42,8 @@ func main() {
 // filename: nombre del archivo
 // ilb: ignorar espacios en blanco
 // dict: ordenar por diccionario
-// ign:
-func sorting(filename string, ilb bool, dict bool, ign bool) {
+// ign: ordenar por orden alphanumerico
+func sorting(filename string, ilb bool, dict bool, ign bool, nums bool) {
 	data := openFile(filename)
 	if ilb {
 		// elimino espacios en blanco
@@ -50,9 +55,36 @@ func sorting(filename string, ilb bool, dict bool, ign bool) {
 		arr := strings.Split(string(data), "\n")
 		sort.Sort(alphabet.Alphabetic(arr))
 		fmt.Println(strings.Join(arr[:], "\n"))
+	} else if nums {
+		numbs(data)
 	} else {
 		printDefault(string(data))
 	}
+}
+
+func numbs(data []byte) {
+	arr := toNumbers(data)
+	sort.Ints(arr)
+	printNumbers(arr)
+}
+
+func printNumbers(data []int) {
+	for _, n := range data {
+		fmt.Printf("%v \n", n)
+	}
+}
+
+func toNumbers(data []byte) []int {
+	strs := strings.Split(string(data), "\n")
+	var nums []int
+	for _, s := range strs {
+		result, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			panic(err)
+		}
+		nums = append(nums, int(result))
+	}
+	return nums
 }
 
 func printDefault(data string) {
