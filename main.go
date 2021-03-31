@@ -12,9 +12,13 @@ import (
 var (
 	b bool // -b, --ignore-leading-blanks
 	d bool // -d, --dictionary-order
+	f bool // -f, --ignore-case
 )
 
 func main() {
+	// -f, --ignore-case
+	flag.BoolVar(&f, "f", false, "fold lower case to upper case characters")
+	flag.BoolVar(&f, "ignore-case", false, "fold lower case to upper case characters")
 	// -d, --dictionary-order      consider only blanks and alphanumeric characters
 	flag.BoolVar(&d, "d", false, "consider only blanks and alphanumeric characters")
 	flag.BoolVar(&d, "dictionary-order", false, "consider only blanks and alphanumeric characters")
@@ -24,8 +28,8 @@ func main() {
 	flag.Parse()
 
 	// recibo todos los los parametros
-	for _, f := range flag.Args() {
-		sorting(f, b, d)
+	for _, file := range flag.Args() {
+		sorting(file, b, d, f)
 	}
 }
 
@@ -33,7 +37,8 @@ func main() {
 // filename: nombre del archivo
 // ilb: ignorar espacios en blanco
 // dict: ordenar por diccionario
-func sorting(filename string, ilb bool, dict bool) {
+// ign:
+func sorting(filename string, ilb bool, dict bool, ign bool) {
 	data := openFile(filename)
 	if ilb {
 		// elimino espacios en blanco
@@ -41,6 +46,10 @@ func sorting(filename string, ilb bool, dict bool) {
 		printDefault(spaces)
 	} else if dict {
 		printDefault(string(data))
+	} else if ign {
+		arr := strings.Split(string(data), "\n")
+		sort.Sort(alphabet.Alphabetic(arr))
+		fmt.Println(strings.Join(arr[:], "\n"))
 	} else {
 		printDefault(string(data))
 	}
@@ -50,7 +59,7 @@ func printDefault(data string) {
 	// divido el archivo por cada linea
 	// organizo, e imprimo
 	arr := strings.Split(data, "\n")
-	sort.Sort(alphabet.Alphabetic(arr))
+	sort.Strings(arr)
 	fmt.Println(strings.Join(arr[:], "\n"))
 }
 
