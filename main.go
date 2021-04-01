@@ -43,6 +43,7 @@ func main() {
 // ilb: ignorar espacios en blanco
 // dict: ordenar por diccionario
 // ign: ordenar por orden alphanumerico
+// nums: si son numeros a ordenar
 func sorting(filename string, ilb bool, dict bool, ign bool, nums bool) {
 	data := openFile(filename)
 	if ilb {
