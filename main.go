@@ -12,6 +12,7 @@ import (
 var (
 	c  bool // -c
 	cs bool // -C
+	m  bool // -m
 )
 
 func main() {
@@ -23,13 +24,20 @@ func main() {
 	// -C
 	flag.BoolVar(&cs, "C", false, `Same as -c, except that a warning message shall not be sent to standard error if  disorder  or,  with	-u,  a	duplicate  key	is
 	detected.`)
+	// -m
+	flag.BoolVar(&m, "m", false, "Merge only; the input file shall be assumed to be already sorted.")
 	flag.Parse()
 
 	// recibo todos los los parametros
 	for _, file := range flag.Args() {
-		if c || cs {
+		switch {
+		case m:
+			printFile(file)
+		case c || cs:
+			sorting(file)
+		default:
+			printFile(file)
 		}
-		sorting(file)
 	}
 }
 
@@ -37,21 +45,26 @@ func main() {
 // filename: nombre del archivo
 func sorting(filename string) {
 	data := openFile(filename)
-	if c {
-		arr := strings.Split(string(data), "\n")
-		if sort.StringsAreSorted(arr) {
-			os.Exit(0)
-		}
-		fmt.Fprintln(os.Stderr, "El archivo no esta ordenado")
-		os.Exit(1)
-	} else if cs {
-		arr := strings.Split(string(data), "\n")
-		if sort.StringsAreSorted(arr) {
-			os.Exit(0)
-		}
-		fmt.Println("El archivo no esta ordenado")
-		os.Exit(1)
+	arr := strings.Split(string(data), "\n")
+
+	// en caso de que este ordenado
+	if sort.StringsAreSorted(arr) {
+		os.Exit(0)
+		return
 	}
+
+	switch {
+	case c:
+		fmt.Fprintln(os.Stderr, "El archivo no esta ordenado")
+	default:
+		fmt.Println("El archivo no esta ordenado")
+	}
+
+	os.Exit(1)
+}
+
+func printFile(filename string) {
+	data := openFile(filename)
 	printDefault(string(data))
 }
 
