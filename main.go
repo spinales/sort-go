@@ -4,88 +4,40 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"sort"
-	"sort-go/internal/alphabet"
-	"strconv"
 	"strings"
 )
 
-var (
-	b bool // -b, --ignore-leading-blanks
-	d bool // -d, --dictionary-order
-	f bool // -f, --ignore-case
-	g bool // -g, --general-numeric-sort
-)
+var c bool
 
 func main() {
-	// -g, --general-numeric-sort
-	flag.BoolVar(&g, "g", false, "compare according to general numerical value")
-	flag.BoolVar(&g, "general-numeric-sort", false, "compare according to general numerical value")
-	// -f, --ignore-case
-	flag.BoolVar(&f, "f", false, "fold lower case to upper case characters")
-	flag.BoolVar(&f, "ignore-case", false, "fold lower case to upper case characters")
-	// -d, --dictionary-order      consider only blanks and alphanumeric characters
-	flag.BoolVar(&d, "d", false, "consider only blanks and alphanumeric characters")
-	flag.BoolVar(&d, "dictionary-order", false, "consider only blanks and alphanumeric characters")
-	// -b, --ignore-leading-blanks  ignore leading blanks
-	flag.BoolVar(&b, "b", false, "ignore leading blanks")
-	flag.BoolVar(&b, "ignore-leading-blanks", false, "ignore leading blanks")
+	flag.BoolVar(&c, "c", false, `Check	that the single input file is ordered as specified by the arguments and the collating sequence of the current locale. 
+	Output shall not be sent to standard output. The exit code shall indicate whether or not disorder was detected or an error occurred.
+	If disorder  (or,  with -u, a duplicate key) is detected, a warning message shall be sent to standard error indicating where the
+	disorder or duplicate key was found.`)
 	flag.Parse()
 
 	// recibo todos los los parametros
 	for _, file := range flag.Args() {
-		sorting(file, b, d, f, g)
+		sorting(file, c)
 	}
 }
 
 // funcionamiento de variables por orden:
 // filename: nombre del archivo
-// ilb: ignorar espacios en blanco
-// dict: ordenar por diccionario
-// ign: ordenar por orden alphanumerico
-// nums: si son numeros a ordenar
-func sorting(filename string, ilb bool, dict bool, ign bool, nums bool) {
+// sorted: para determinar si el archivo esta ordenado
+func sorting(filename string, sorted bool) {
 	data := openFile(filename)
-	if ilb {
-		// elimino espacios en blanco
-		spaces := strings.ReplaceAll(string(data), "\n\n", "\n")
-		printDefault(spaces)
-	} else if dict {
-		printDefault(string(data))
-	} else if ign {
+	if sorted {
 		arr := strings.Split(string(data), "\n")
-		sort.Sort(alphabet.Alphabetic(arr))
-		fmt.Println(strings.Join(arr[:], "\n"))
-	} else if nums {
-		numbs(data)
-	} else {
-		printDefault(string(data))
-	}
-}
-
-func numbs(data []byte) {
-	arr := toNumbers(data)
-	sort.Ints(arr)
-	printNumbers(arr)
-}
-
-func printNumbers(data []int) {
-	for _, n := range data {
-		fmt.Printf("%v \n", n)
-	}
-}
-
-func toNumbers(data []byte) []int {
-	strs := strings.Split(string(data), "\n")
-	var nums []int
-	for _, s := range strs {
-		result, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
-			panic(err)
+		if sort.StringsAreSorted(arr) {
+			os.Exit(0)
 		}
-		nums = append(nums, int(result))
+		fmt.Fprintln(os.Stderr, "el archivo no esta ordenado")
+		os.Exit(1)
 	}
-	return nums
+	printDefault(string(data))
 }
 
 func printDefault(data string) {
