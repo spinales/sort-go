@@ -10,10 +10,12 @@ import (
 )
 
 var (
-	c  bool // -c
-	cs bool // -C
-	m  bool // -m
+	c  bool   // -c
+	cs bool   // -C
+	m  bool   // -m
+	o  string // -o
 )
+var data []string
 
 func main() {
 	// -c
@@ -26,19 +28,31 @@ func main() {
 	detected.`)
 	// -m
 	flag.BoolVar(&m, "m", false, "Merge only; the input file shall be assumed to be already sorted.")
+	// -o
+	flag.StringVar(&o, "o", "", "Specify  the  name  of  an  output  file to be used instead of the standard output. This file can be the same as one of the input files.")
 	flag.Parse()
 
 	// recibo todos los los parametros
 	for _, file := range flag.Args() {
+		fileData := openFile(file)
 		switch {
 		case m:
-			printFile(file)
+			data = append(data, strings.Split(string(fileData), "\n")...)
 		case c || cs:
 			sorting(file)
 		default:
-			printFile(file)
+			data = append(data, strings.Split(string(fileData), "\n")...)
+			sort.Strings(data)
 		}
 	}
+
+	if o != "" {
+		writeFile(o, data)
+		os.Exit(0)
+	}
+
+	fmt.Println(strings.Join(data[:], "\n"))
+	os.Exit(0)
 }
 
 // funcionamiento de variables por orden:
@@ -63,19 +77,6 @@ func sorting(filename string) {
 	os.Exit(1)
 }
 
-func printFile(filename string) {
-	data := openFile(filename)
-	printDefault(string(data))
-}
-
-func printDefault(data string) {
-	// divido el archivo por cada linea
-	// organizo, e imprimo
-	arr := strings.Split(data, "\n")
-	sort.Strings(arr)
-	fmt.Println(strings.Join(arr[:], "\n"))
-}
-
 // abre el archivo por la ruta pasada
 func openFile(filename string) []byte {
 	dat, err := ioutil.ReadFile(filename)
@@ -83,4 +84,11 @@ func openFile(filename string) []byte {
 		panic(err)
 	}
 	return dat
+}
+
+func writeFile(filepath string, data []string) {
+	err := ioutil.WriteFile(filepath, []byte(strings.Join(data, "\n")), 0644)
+	if err != nil {
+		panic(err)
+	}
 }
