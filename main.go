@@ -48,13 +48,19 @@ func main() {
 	// recibo todos los los parametros
 	for _, file := range flag.Args() {
 		fileData := openFile(file)
+		arr := strings.Split(string(fileData), "\n")
 		switch {
 		case m:
-			data = append(data, strings.Split(string(fileData), "\n")...)
+			data = append(data, arr...)
+		case c && u:
+			if len(arr) != len(suprimeDuplicates(arr)) {
+				fmt.Fprintln(os.Stderr, "el archivo tiene duplicados")
+			}
+			sorting(file)
 		case c || cs:
 			sorting(file)
 		case u:
-			data = append(data, suprimeDuplicates(strings.Split(string(fileData), "\n"))...)
+			data = append(data, suprimeDuplicates(arr)...)
 		}
 	}
 
