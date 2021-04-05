@@ -11,15 +11,16 @@ import (
 )
 
 var (
-	c  bool   // -c
-	cs bool   // -C
-	m  bool   // -m
-	o  string // -o
-	u  bool   // -u
-	h  bool   // -h --help
-	d  bool   //
+	data []string
+	c    bool   // -c
+	cs   bool   // -C
+	m    bool   // -m
+	o    string // -o
+	u    bool   // -u
+	h    bool   // -h --help
+	d    bool   // -d
+	i    bool   // -i
 )
-var data []string
 
 func main() {
 	// -c
@@ -42,6 +43,9 @@ func main() {
 	flag.BoolVar(&d, "d", false, `Specify that only <blank> characters and alphanumeric characters, according to the 
 		current setting of LC_CTYPE, shall be significant in comparisons. The behavior is undefined for a sort key to 
 		which -i or -n also applies.`)
+	// -i
+	flag.BoolVar(&i, "i", false, `Ignore all characters that are non-printable, according to the current 
+		setting of LC_CTYPE. The behavior is undefined for a sort key for which -n also applies.`)
 	// -h --help
 	flag.BoolVar(&h, "h", false, "help command.")
 	flag.BoolVar(&h, "help", false, "help command.")
@@ -108,12 +112,12 @@ func sorting(filename string) {
 
 	// en caso de que este ordenado
 	switch {
-	// case i:
-	// 	res := invisibleChar(data)
-	// 	arrsplit := strings.Split(string(res), "\n")
-	// 	if sort.StringsAreSorted(arrsplit) {
-	// 		os.Exit(0)
-	// 	}
+	case i:
+		res := invisibleChar(data)
+		arrsplit := strings.Split(string(res), "\n")
+		if sort.StringsAreSorted(arrsplit) {
+			os.Exit(0)
+		}
 	case d:
 		if sort.StringsAreSorted(arr) {
 			os.Exit(0)
