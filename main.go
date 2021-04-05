@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +17,7 @@ var (
 	o  string // -o
 	u  bool   // -u
 	h  bool   // -h --help
+	d  bool   //
 )
 var data []string
 
@@ -36,6 +38,10 @@ func main() {
 	// -u
 	flag.BoolVar(&u, "u", false, `Unique: suppress all but one in each set of lines having equal keys. If used with the -c option, 
 		check that there are  no  lines with duplicate keys, in addition to checking that the input file is sorted.`)
+	// -d
+	flag.BoolVar(&d, "d", false, `Specify that only <blank> characters and alphanumeric characters, according to the 
+		current setting of LC_CTYPE, shall be significant in comparisons. The behavior is undefined for a sort key to 
+		which -i or -n also applies.`)
 	// -h --help
 	flag.BoolVar(&h, "h", false, "help command.")
 	flag.BoolVar(&h, "help", false, "help command.")
@@ -87,6 +93,13 @@ func suprimeDuplicates(src []string) []string {
 	return src[:j]
 }
 
+func invisibleChar(arr []byte) []byte {
+	for v := range invisible {
+		arr = bytes.ReplaceAll(arr, []byte{v}, []byte(invisible[v]))
+	}
+	return arr
+}
+
 // funcionamiento de variables por orden:
 // filename: nombre del archivo
 func sorting(filename string) {
@@ -94,15 +107,23 @@ func sorting(filename string) {
 	arr := strings.Split(string(data), "\n")
 
 	// en caso de que este ordenado
-	if sort.StringsAreSorted(arr) {
-		os.Exit(0)
-		return
+	switch {
+	// case i:
+	// 	res := invisibleChar(data)
+	// 	arrsplit := strings.Split(string(res), "\n")
+	// 	if sort.StringsAreSorted(arrsplit) {
+	// 		os.Exit(0)
+	// 	}
+	case d:
+		if sort.StringsAreSorted(arr) {
+			os.Exit(0)
+		}
 	}
 
 	switch {
 	case c:
 		fmt.Fprintln(os.Stderr, "El archivo no esta ordenado")
-	default:
+	case cs:
 		fmt.Println("El archivo no esta ordenado")
 	}
 
