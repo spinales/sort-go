@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
+	"sort-go/internal/alphabet"
 	"strings"
 )
 
@@ -20,6 +21,7 @@ var (
 	h    bool   // -h --help
 	d    bool   // -d
 	i    bool   // -i
+	f    bool   // -f
 )
 
 func main() {
@@ -46,6 +48,10 @@ func main() {
 	// -i
 	flag.BoolVar(&i, "i", false, `Ignore all characters that are non-printable, according to the current 
 		setting of LC_CTYPE. The behavior is undefined for a sort key for which -n also applies.`)
+	// -f
+	flag.BoolVar(&f, "f", false, `Consider all lowercase characters that have uppercase equivalents, 
+		according to the current setting of LC_CTYPE, to be the upper-case equivalent for the 
+		purposes of comparison.`)
 	// -h --help
 	flag.BoolVar(&h, "h", false, "help command.")
 	flag.BoolVar(&h, "help", false, "help command.")
@@ -104,6 +110,24 @@ func invisibleChar(arr []byte) []byte {
 	return arr
 }
 
+func compare(a, b []string) bool {
+	if (a == nil) != (b == nil) {
+		return false
+	}
+
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+
+	return true
+}
+
 // funcionamiento de variables por orden:
 // filename: nombre del archivo
 func sorting(filename string) {
@@ -120,6 +144,12 @@ func sorting(filename string) {
 		}
 	case d:
 		if sort.StringsAreSorted(arr) {
+			os.Exit(0)
+		}
+	case f:
+		arrSorted := strings.Split(string(data), "\n")
+		sort.Sort(alphabet.Alphabetic(arrSorted))
+		if compare(arr, arrSorted) {
 			os.Exit(0)
 		}
 	}
