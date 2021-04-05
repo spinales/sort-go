@@ -8,6 +8,7 @@ import (
 	"os"
 	"sort"
 	"sort-go/internal/alphabet"
+	"strconv"
 	"strings"
 )
 
@@ -22,6 +23,7 @@ var (
 	d    bool   // -d
 	i    bool   // -i
 	f    bool   // -f
+	n    bool   // -n
 )
 
 func main() {
@@ -52,6 +54,11 @@ func main() {
 	flag.BoolVar(&f, "f", false, `Consider all lowercase characters that have uppercase equivalents, 
 		according to the current setting of LC_CTYPE, to be the upper-case equivalent for the 
 		purposes of comparison.`)
+	// -n
+	flag.BoolVar(&n, "n", false, `Restrict the sort key to an initial numeric string, consisting of optional <blank> 
+		characters, optional minus-sign, and  zero	or more  digits  with an optional radix character and thousands 
+		separators (as defined in the current locale), which shall be sorted by arithmetic value. An empty digit string 
+		shall be treated as zero. Leading zeros and signs on zeros shall not affect ordering`)
 	// -h --help
 	flag.BoolVar(&h, "h", false, "help command.")
 	flag.BoolVar(&h, "help", false, "help command.")
@@ -152,6 +159,19 @@ func sorting(filename string) {
 		if compare(arr, arrSorted) {
 			os.Exit(0)
 		}
+	case n:
+		var values []int
+		for _, v := range arr {
+			num, err := strconv.ParseInt(v, 10, 64)
+			if err != nil {
+				panic(err)
+			}
+			values = append(values, int(num))
+		}
+		if sort.IntsAreSorted(values) {
+			os.Exit(0)
+		}
+		// sort.Ints(values)
 	}
 
 	switch {
