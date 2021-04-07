@@ -27,43 +27,50 @@ var (
 	f      bool   // -f
 	n      bool   // -n
 	r      bool   // -r
+	t      string // -t
 )
 
 func main() {
 	// -c
-	flag.BoolVar(&c, "c", false, `Check	that the single input file is ordered as specified by the arguments and 
+	flag.BoolVar(&c, "c", false, `Check that the single input file is ordered as specified by the arguments and 
 	the collating sequence of the current locale. Output shall not be sent to standard output. The exit code 
-	shall indicate whether or not disorder was detected or an error occurred. If disorder (or,  with -u, a duplicate key) 
+	shall indicate whether or not disorder was detected or an error occurred. If disorder (or, with -u, a duplicate key) 
 	is detected, a warning message shall be sent to standard error indicating where the disorder or duplicate key was found.`)
 	// -C
 	flag.BoolVar(&cs, "C", false, `Same as -c, except that a warning message shall not be sent to standard error 
-		if disorder or, with -u, a duplicate key is detected.`)
+	if disorder or, with -u, a duplicate key is detected.`)
 	// -m
 	flag.BoolVar(&m, "m", false, "Merge only; the input file shall be assumed to be already sorted.")
 	// -o
 	flag.StringVar(&o, "o", "", `Specify the name of an output file to be used instead of the standard output. 
-		This file can be the same as one of the input files.`)
+	This file can be the same as one of the input files.`)
 	// -u
 	flag.BoolVar(&u, "u", false, `Unique: suppress all but one in each set of lines having equal keys. If used with the -c option, 
-		check that there are  no  lines with duplicate keys, in addition to checking that the input file is sorted.`)
+	check that there are  no  lines with duplicate keys, in addition to checking that the input file is sorted.`)
 	// -d
 	flag.BoolVar(&d, "d", false, `Specify that only <blank> characters and alphanumeric characters, according to the 
-		current setting of LC_CTYPE, shall be significant in comparisons. The behavior is undefined for a sort key to 
-		which -i or -n also applies.`)
+	current setting of LC_CTYPE, shall be significant in comparisons. The behavior is undefined for a sort key to 
+	which -i or -n also applies.`)
 	// -i
 	flag.BoolVar(&i, "i", false, `Ignore all characters that are non-printable, according to the current 
-		setting of LC_CTYPE. The behavior is undefined for a sort key for which -n also applies.`)
+	setting of LC_CTYPE. The behavior is undefined for a sort key for which -n also applies.`)
 	// -f
 	flag.BoolVar(&f, "f", false, `Consider all lowercase characters that have uppercase equivalents, 
-		according to the current setting of LC_CTYPE, to be the upper-case equivalent for the 
-		purposes of comparison.`)
+	according to the current setting of LC_CTYPE, to be the upper-case equivalent for the 
+	purposes of comparison.`)
 	// -n
 	flag.BoolVar(&n, "n", false, `Restrict the sort key to an initial numeric string, consisting of optional <blank> 
-		characters, optional minus-sign, and  zero	or more  digits  with an optional radix character and thousands 
-		separators (as defined in the current locale), which shall be sorted by arithmetic value. An empty digit string 
-		shall be treated as zero. Leading zeros and signs on zeros shall not affect ordering`)
+	characters, optional minus-sign, and  zero	or more  digits  with an optional radix character and thousands 
+	separators (as defined in the current locale), which shall be sorted by arithmetic value. An empty digit string 
+	shall be treated as zero. Leading zeros and signs on zeros shall not affect ordering`)
 	// -r
 	flag.BoolVar(&r, "r", false, "Reverse the sense of comparisons.")
+	// -t
+	flag.StringVar(&t, "t", "", `Use char as the field separator character; char shall not be considered to be part of 
+	a field (although it can be included in a sort  key). Each occurrence of char shall be significant 
+	(for example, <char><char> delimits an empty field). If -t is not specified, <blank> characters 
+	shall be used as default field separators; each maximal non-empty sequence of  <blank>  characters that 
+	follows a non-<blank> shall be a field separator.`)
 	// -h --help
 	flag.BoolVar(&h, "h", false, "help command.")
 	flag.BoolVar(&h, "help", false, "help command.")
@@ -76,7 +83,13 @@ func main() {
 	// recibo todos los los parametros
 	for _, fle := range flag.Args() {
 		fileData := file.OpenFile(fle)
-		arr := strings.Split(string(fileData), "\n")
+		var arr []string
+		if t != "" {
+			arr = strings.Split(string(fileData), t)
+		} else {
+			arr = strings.Split(string(fileData), "\n")
+		}
+		// fmt.Println(len(arr))
 
 		switch {
 		case m:
@@ -110,6 +123,8 @@ func main() {
 				values = append(values, int(num))
 			}
 			sort.Ints(values)
+		default:
+			data = append(data, arr...)
 		}
 	}
 
