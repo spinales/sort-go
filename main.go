@@ -4,26 +4,29 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"sort"
 	"sort-go/internal/alphabet"
+	"sort-go/internal/file"
+	"sort-go/internal/reverse"
 	"strconv"
 	"strings"
 )
 
 var (
-	data []string
-	c    bool   // -c
-	cs   bool   // -C
-	m    bool   // -m
-	o    string // -o
-	u    bool   // -u
-	h    bool   // -h --help
-	d    bool   // -d
-	i    bool   // -i
-	f    bool   // -f
-	n    bool   // -n
+	data   []string
+	values []int
+	c      bool   // -c
+	cs     bool   // -C
+	m      bool   // -m
+	o      string // -o
+	u      bool   // -u
+	h      bool   // -h --help
+	d      bool   // -d
+	i      bool   // -i
+	f      bool   // -f
+	n      bool   // -n
+	r      bool   // -r
 )
 
 func main() {
@@ -59,6 +62,8 @@ func main() {
 		characters, optional minus-sign, and  zero	or more  digits  with an optional radix character and thousands 
 		separators (as defined in the current locale), which shall be sorted by arithmetic value. An empty digit string 
 		shall be treated as zero. Leading zeros and signs on zeros shall not affect ordering`)
+	// -r
+	flag.BoolVar(&r, "r", false, "Reverse the sense of comparisons.")
 	// -h --help
 	flag.BoolVar(&h, "h", false, "help command.")
 	flag.BoolVar(&h, "help", false, "help command.")
@@ -69,9 +74,10 @@ func main() {
 	}
 
 	// recibo todos los los parametros
-	for _, file := range flag.Args() {
-		fileData := openFile(file)
+	for _, fle := range flag.Args() {
+		fileData := file.OpenFile(fle)
 		arr := strings.Split(string(fileData), "\n")
+
 		switch {
 		case m:
 			data = append(data, arr...)
@@ -79,16 +85,55 @@ func main() {
 			if len(arr) != len(suprimeDuplicates(arr)) {
 				fmt.Fprintln(os.Stderr, "el archivo tiene duplicados")
 			}
-			sorting(file)
+			sorting(fle)
 		case c || cs:
-			sorting(file)
+			sorting(fle)
 		case u:
 			data = append(data, suprimeDuplicates(arr)...)
+		case d:
+			sort.Strings(arr)
+			data = append(data, arr...)
+		case f:
+			sort.Sort(alphabet.Alphabetic(arr))
+			data = append(data, arr...)
+		case i:
+			res := invisibleChar(fileData)
+			arrsplit := strings.Split(string(res), "\n")
+			sort.StringsAreSorted(arrsplit)
+			data = append(data, arrsplit...)
+		case n:
+			for _, v := range arr {
+				num, err := strconv.ParseInt(v, 10, 64)
+				if err != nil {
+					panic(err)
+				}
+				values = append(values, int(num))
+			}
+			sort.Ints(values)
 		}
 	}
 
+	if r {
+		reverse.StringArray(data)
+	} else if n && r {
+		reverse.IntArray(values)
+	}
+
+	if n {
+		res := strings.ReplaceAll(fmt.Sprint(values), "[", "")
+		res = strings.ReplaceAll(res, "]", "")
+		// res, err := fmt.Printf("%q", fmt.Sprint(values))
+		if o != "" {
+			file.WriteFile(o, strings.Split(res, " "))
+			os.Exit(0)
+		}
+
+		fmt.Println(strings.Join(strings.Split(res, " "), "\n"))
+		os.Exit(0)
+	}
+
 	if o != "" {
-		writeFile(o, data)
+		file.WriteFile(o, data)
 		os.Exit(0)
 	}
 
@@ -138,7 +183,7 @@ func compare(a, b []string) bool {
 // funcionamiento de variables por orden:
 // filename: nombre del archivo
 func sorting(filename string) {
-	data := openFile(filename)
+	data := file.OpenFile(filename)
 	arr := strings.Split(string(data), "\n")
 
 	// en caso de que este ordenado
@@ -182,20 +227,4 @@ func sorting(filename string) {
 	}
 
 	os.Exit(1)
-}
-
-// abre el archivo por la ruta pasada
-func openFile(filename string) []byte {
-	dat, err := ioutil.ReadFile(filename)
-	if err != nil {
-		panic(err)
-	}
-	return dat
-}
-
-func writeFile(filepath string, data []string) {
-	err := ioutil.WriteFile(filepath, []byte(strings.Join(data, "\n")), 0644)
-	if err != nil {
-		panic(err)
-	}
 }
