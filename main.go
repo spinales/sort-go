@@ -28,6 +28,7 @@ var (
 	n      bool   // -n
 	r      bool   // -r
 	t      string // -t
+	b      bool   // -b
 )
 
 func main() {
@@ -71,6 +72,11 @@ func main() {
 	(for example, <char><char> delimits an empty field). If -t is not specified, <blank> characters 
 	shall be used as default field separators; each maximal non-empty sequence of  <blank>  characters that 
 	follows a non-<blank> shall be a field separator.`)
+	// -b
+	flag.BoolVar(&b, "b", false, `Ignore leading <blank> characters when determining the starting and ending 
+	positions of a restricted sort key. If the	-b  option is specified before the first -k option, it shall 
+	be applied to all -k options. Otherwise, the -b option can be attached independently to each -k 
+	field_start or field_end option-argument (see below).`)
 	// -h --help
 	flag.BoolVar(&h, "h", false, "help command.")
 	flag.BoolVar(&h, "help", false, "help command.")
@@ -89,7 +95,6 @@ func main() {
 		} else {
 			arr = strings.Split(string(fileData), "\n")
 		}
-		// fmt.Println(len(arr))
 
 		switch {
 		case m:
@@ -98,9 +103,9 @@ func main() {
 			if len(arr) != len(suprimeDuplicates(arr)) {
 				fmt.Fprintln(os.Stderr, "el archivo tiene duplicados")
 			}
-			sorting(fle)
+			sorting(fileData)
 		case c || cs:
-			sorting(fle)
+			sorting(fileData)
 		case u:
 			data = append(data, suprimeDuplicates(arr)...)
 		case d:
@@ -114,6 +119,16 @@ func main() {
 			arrsplit := strings.Split(string(res), "\n")
 			sort.StringsAreSorted(arrsplit)
 			data = append(data, arrsplit...)
+		case b:
+			spaces := strings.ReplaceAll(string(fileData), "\n\n", "\n")
+			for strings.Contains(string(fileData), "\n\n") {
+				spaces = strings.ReplaceAll(spaces, "\n\n", "\n")
+				if !strings.Contains(spaces, "\n\n") {
+					break
+				}
+			}
+			arr := strings.Split(spaces, "\n")
+			data = append(data, arr...)
 		case n:
 			for _, v := range arr {
 				num, err := strconv.ParseInt(v, 10, 64)
@@ -197,8 +212,7 @@ func compare(a, b []string) bool {
 
 // funcionamiento de variables por orden:
 // filename: nombre del archivo
-func sorting(filename string) {
-	data := file.OpenFile(filename)
+func sorting(data []byte) {
 	arr := strings.Split(string(data), "\n")
 
 	// en caso de que este ordenado
