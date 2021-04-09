@@ -29,6 +29,7 @@ var (
 	r      bool   // -r
 	t      string // -t
 	b      bool   // -b
+	k      string // -k
 )
 
 func main() {
@@ -77,6 +78,20 @@ func main() {
 	positions of a restricted sort key. If the	-b  option is specified before the first -k option, it shall 
 	be applied to all -k options. Otherwise, the -b option can be attached independently to each -k 
 	field_start or field_end option-argument (see below).`)
+	// -k
+	flag.StringVar(&k, "k", "", `keydef The keydef argument is a restricted sort key field definition. The format of this definition is:
+	where field_start and field_end define a key field restricted to a portion of the line (see the EXTENDED DESCRIPTION section), and 
+	type is a modifier from the list of characters 'b', 'd', 'f', 'i', 'n', 'r'. The 'b' modifier shall behave like the -b option, but 
+	shall apply only to the field_start or field_end to which it is attached. The other modifiers shall behave like the corresponding 
+	options, but shall apply only to the key field to which they are attached; they shall have this effect if specified with field_start, 
+	field_end, or both. If any modifier is attached to a field_start or to a field_end, no option shall apply to either. 
+	Implementations shall support at least nine occurrences of the -k option, which shall be significant in command line order. 
+	If no -k option is specified, a default sort key of the entire line shall be used.
+	When  there  are  multiple key fields, later keys shall be compared only after all earlier keys compare equal. 
+	Except when the -u option is specified, lines that otherwise compare equal shall be ordered as if none of the 
+	options -d, -f, -i, -n, or -k were present (but	with -r still in effect, if it was specified) and with all 
+	bytes in the lines significant to the comparison. The order in which lines that still compare equal are 
+	written is unspecified.`)
 	// -h --help
 	flag.BoolVar(&h, "h", false, "help command.")
 	flag.BoolVar(&h, "help", false, "help command.")
@@ -138,6 +153,29 @@ func main() {
 				values = append(values, int(num))
 			}
 			sort.Ints(values)
+		case k != "":
+			i, err := strconv.Atoi(k)
+			if err != nil {
+				panic(err)
+			}
+
+			var sorting []string // columna por la que se ordenara
+			for _, v := range arr {
+				part := strings.Split(v, " ")
+				sorting = append(sorting, part[i-1])
+			}
+
+			sort.Strings(sorting)
+
+			for _, v := range sorting {
+				for _, s := range arr {
+					if v == strings.Split(s, " ")[i-1] {
+						data = append(data, s)
+					}
+				}
+			}
+
+			// fmt.Println(strings.Join(result[:], "\n"))
 		default:
 			data = append(data, arr...)
 		}
