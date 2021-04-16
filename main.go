@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"flag"
 	"fmt"
 	"os"
 	"sort"
@@ -11,6 +10,8 @@ import (
 	"sort-go/internal/reverse"
 	"strconv"
 	"strings"
+
+	"github.com/pborman/getopt/v2"
 )
 
 var (
@@ -32,54 +33,54 @@ var (
 	k      string // -k
 )
 
-func main() {
+func init() {
 	// -c
-	flag.BoolVar(&c, "c", false, `Check that the single input file is ordered as specified by the arguments and 
+	getopt.Flag(&c, 'c', `Check that the single input file is ordered as specified by the arguments and 
 	the collating sequence of the current locale. Output shall not be sent to standard output. The exit code 
 	shall indicate whether or not disorder was detected or an error occurred. If disorder (or, with -u, a duplicate key) 
 	is detected, a warning message shall be sent to standard error indicating where the disorder or duplicate key was found.`)
 	// -C
-	flag.BoolVar(&cs, "C", false, `Same as -c, except that a warning message shall not be sent to standard error 
+	getopt.Flag(&cs, 'C', `Same as -c, except that a warning message shall not be sent to standard error 
 	if disorder or, with -u, a duplicate key is detected.`)
 	// -m
-	flag.BoolVar(&m, "m", false, "Merge only; the input file shall be assumed to be already sorted.")
+	getopt.Flag(&m, 'm', "Merge only; the input file shall be assumed to be already sorted.")
 	// -o
-	flag.StringVar(&o, "o", "", `Specify the name of an output file to be used instead of the standard output. 
+	getopt.Flag(&o, 'o', `Specify the name of an output file to be used instead of the standard output. 
 	This file can be the same as one of the input files.`)
 	// -u
-	flag.BoolVar(&u, "u", false, `Unique: suppress all but one in each set of lines having equal keys. If used with the -c option, 
+	getopt.Flag(&u, 'u', `Unique: suppress all but one in each set of lines having equal keys. If used with the -c option, 
 	check that there are  no  lines with duplicate keys, in addition to checking that the input file is sorted.`)
 	// -d
-	flag.BoolVar(&d, "d", false, `Specify that only <blank> characters and alphanumeric characters, according to the 
+	getopt.Flag(&d, 'd', `Specify that only <blank> characters and alphanumeric characters, according to the 
 	current setting of LC_CTYPE, shall be significant in comparisons. The behavior is undefined for a sort key to 
 	which -i or -n also applies.`)
 	// -i
-	flag.BoolVar(&i, "i", false, `Ignore all characters that are non-printable, according to the current 
+	getopt.Flag(&i, 'i', `Ignore all characters that are non-printable, according to the current 
 	setting of LC_CTYPE. The behavior is undefined for a sort key for which -n also applies.`)
 	// -f
-	flag.BoolVar(&f, "f", false, `Consider all lowercase characters that have uppercase equivalents, 
+	getopt.Flag(&f, 'f', `Consider all lowercase characters that have uppercase equivalents, 
 	according to the current setting of LC_CTYPE, to be the upper-case equivalent for the 
 	purposes of comparison.`)
 	// -n
-	flag.BoolVar(&n, "n", false, `Restrict the sort key to an initial numeric string, consisting of optional <blank> 
+	getopt.Flag(&n, 'n', `Restrict the sort key to an initial numeric string, consisting of optional <blank> 
 	characters, optional minus-sign, and  zero	or more  digits  with an optional radix character and thousands 
 	separators (as defined in the current locale), which shall be sorted by arithmetic value. An empty digit string 
 	shall be treated as zero. Leading zeros and signs on zeros shall not affect ordering`)
 	// -r
-	flag.BoolVar(&r, "r", false, "Reverse the sense of comparisons.")
+	getopt.Flag(&r, 'r', "Reverse the sense of comparisons.")
 	// -t
-	flag.StringVar(&t, "t", "", `Use char as the field separator character; char shall not be considered to be part of 
+	getopt.Flag(&t, 't', `Use char as the field separator character; char shall not be considered to be part of 
 	a field (although it can be included in a sort  key). Each occurrence of char shall be significant 
 	(for example, <char><char> delimits an empty field). If -t is not specified, <blank> characters 
 	shall be used as default field separators; each maximal non-empty sequence of  <blank>  characters that 
 	follows a non-<blank> shall be a field separator.`)
 	// -b
-	flag.BoolVar(&b, "b", false, `Ignore leading <blank> characters when determining the starting and ending 
+	getopt.Flag(&b, 'b', `Ignore leading <blank> characters when determining the starting and ending 
 	positions of a restricted sort key. If the	-b  option is specified before the first -k option, it shall 
 	be applied to all -k options. Otherwise, the -b option can be attached independently to each -k 
 	field_start or field_end option-argument (see below).`)
 	// -k
-	flag.StringVar(&k, "k", "", `keydef The keydef argument is a restricted sort key field definition. The format of this definition is:
+	getopt.Flag(&k, 'k', `keydef The keydef argument is a restricted sort key field definition. The format of this definition is:
 	where field_start and field_end define a key field restricted to a portion of the line (see the EXTENDED DESCRIPTION section), and 
 	type is a modifier from the list of characters 'b', 'd', 'f', 'i', 'n', 'r'. The 'b' modifier shall behave like the -b option, but 
 	shall apply only to the field_start or field_end to which it is attached. The other modifiers shall behave like the corresponding 
@@ -93,16 +94,17 @@ func main() {
 	bytes in the lines significant to the comparison. The order in which lines that still compare equal are 
 	written is unspecified.`)
 	// -h --help
-	flag.BoolVar(&h, "h", false, "help command.")
-	flag.BoolVar(&h, "help", false, "help command.")
-	flag.Parse()
+	getopt.FlagLong(&h, "help", 'h', "help command.")
+	getopt.ParseV2()
+}
 
+func main() {
 	if h {
-		flag.PrintDefaults()
+		getopt.PrintUsage(os.Stdout)
 	}
 
 	// recibo todos los los parametros
-	for _, fle := range flag.Args() {
+	for _, fle := range getopt.Args() {
 		fileData := file.OpenFile(fle)
 		var arr []string
 		if t != "" {
